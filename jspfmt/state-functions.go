@@ -1,16 +1,27 @@
 package jspfmt
 
+import (
+	"strings"
+)
+
 type stateFn func(*lexer) stateFn
+
+const tagChars = "! \nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-=\",."
 
 // lexHtml accepts text until a leftMeta is found
 func lexHTML(l *lexer) stateFn {
+	l.acceptRun(" \n")
+	l.ignore()
 	for {
-		if l.hasPrefix("<") {
+		if strings.HasPrefix(l.input[l.cursor:], "</") {
 			if l.cursor > l.start {
 				l.emit(tokText)
 			}
-			if l.hasPrefix("</") {
-				return lexCloseTag
+			return lexCloseTag
+		}
+		if strings.HasPrefix(l.input[l.cursor:], "<") {
+			if l.cursor > l.start {
+				l.emit(tokText)
 			}
 			return lexOpenTag
 		}
@@ -18,7 +29,6 @@ func lexHTML(l *lexer) stateFn {
 			break
 		}
 	}
-	// We've correctly reached EOF.
 	if l.cursor > l.start {
 		l.emit(tokText)
 	}
@@ -28,7 +38,7 @@ func lexHTML(l *lexer) stateFn {
 
 func lexOpenTag(l *lexer) stateFn {
 	l.cursor += len("<") // step inside
-	l.acceptRunNot("</>")
+	l.acceptRun(tagChars)
 	// Cannot open a tag inside the tag definition.
 	if l.accept("<") {
 		l.emit(tokError)
@@ -57,7 +67,7 @@ func lexOpenTag(l *lexer) stateFn {
 
 func lexCloseTag(l *lexer) stateFn {
 	l.cursor += len("</") // step inside
-	l.acceptRunNot("</>")
+	l.acceptRun(tagChars)
 	// Cannot open a tag inside the tag definition or look self-closing.
 	if l.accept("</") {
 		l.emit(tokError)

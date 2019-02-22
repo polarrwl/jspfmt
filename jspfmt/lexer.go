@@ -1,6 +1,7 @@
 package jspfmt
 
 import (
+	"regexp"
 	"strings"
 	"unicode/utf8"
 )
@@ -48,14 +49,9 @@ func (l *lexer) peek() rune {
 	return r
 }
 
-func (l *lexer) hasPrefix(pfx string) bool {
-	return strings.HasPrefix(l.input[l.cursor:], pfx)
-}
-
 // acceptNot accepts the next rune if it is not a member of invalid.
 func (l *lexer) accept(valid string) bool {
-	r := l.next()
-	if strings.IndexRune(valid, r) < 0 {
+	if strings.IndexRune(valid, l.next()) < 0 {
 		l.backup()
 		return false
 	}
@@ -68,15 +64,20 @@ func (l *lexer) acceptRun(valid string) {
 }
 
 // acceptNot accepts the next rune if it is not a member of invalid.
-func (l *lexer) acceptNot(invalid string) bool {
-	if strings.IndexRune(invalid, l.next()) >= 0 {
+func (l *lexer) acceptRegexp(valid string) bool {
+	match, _ := regexp.MatchString(valid, string(l.next()))
+	if !match {
 		l.backup()
 		return false
 	}
 	return true
 }
 
-func (l *lexer) acceptRunNot(invalid string) {
-	for l.acceptNot(invalid) {
+func (l *lexer) acceptRunRegexp(valid string) {
+	for l.acceptRegexp(valid) {
 	}
+}
+
+func (l *lexer) ignore() {
+	l.start = l.cursor
 }

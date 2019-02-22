@@ -6,8 +6,6 @@ import (
 
 type stateFn func(*lexer) stateFn
 
-const tagChars = "! \nabcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-=\",."
-
 // lexHtml accepts text until a leftMeta is found
 func lexHTML(l *lexer) stateFn {
 	l.acceptRun(" \n")
@@ -38,7 +36,7 @@ func lexHTML(l *lexer) stateFn {
 
 func lexOpenTag(l *lexer) stateFn {
 	l.cursor += len("<") // step inside
-	l.acceptRun(tagChars)
+	l.acceptRunRegexp("[^</>]")
 	// Cannot open a tag inside the tag definition.
 	if l.accept("<") {
 		l.emit(tokError)
@@ -67,7 +65,7 @@ func lexOpenTag(l *lexer) stateFn {
 
 func lexCloseTag(l *lexer) stateFn {
 	l.cursor += len("</") // step inside
-	l.acceptRun(tagChars)
+	l.acceptRunRegexp("[^</>]")
 	// Cannot open a tag inside the tag definition or look self-closing.
 	if l.accept("</") {
 		l.emit(tokError)

@@ -14,10 +14,23 @@ const (
 	tokError tokenType = iota // error occurred; value is the text of the error.
 	tokEOF                    // end of file
 
-	tokOpenTag
-	tokCloseTag
-	tokSelfClosingTag
-	tokText
+	tokLessThan     // Literal "<"
+	tokGreaterThan  // Literal ">"
+	tokLessSlash    // Literal "</"
+	tokSlashGreater // Literal "/>"
+	tokTagName      // Name of the tag.
+	tokAttrKey      // Name of the attribute in the tag.
+	tokEquals       // Literal "="
+	tokAttrVal      // Value of the attribute, including quotes.
+	tokText         // Uninterpreted text inside tags, e.g. <tagname attr="val">[text]</tagname>
+)
+
+const (
+	lessThan     string = "<"
+	greaterThan  string = ">"
+	lessSlash    string = "</"
+	slashGreater string = "/>"
+	equalsSign   string = "="
 )
 
 const (
@@ -30,17 +43,38 @@ func (t token) String() string {
 		return "EOF"
 	case tokError:
 		return "Error: " + t.val
-	case tokOpenTag:
-		return fmt.Sprintf("Open Tag: %q", t.val)
-	case tokCloseTag:
-		return fmt.Sprintf("Close Tag: %q", t.val)
-	case tokSelfClosingTag:
-		return fmt.Sprintf("Self-closing Tag: %q", t.val)
-	case tokText:
-		return fmt.Sprintf("Text: %q", t.val)
 	}
 	// if len(t.val) > 10 {
 	// 	return fmt.Sprintf("%v: %.10q...", t.typ, t.val)
 	// }
-	return fmt.Sprintf("UNKNOWN: %q", t.val)
+	return fmt.Sprintf("%s: %q", t.name(), t.val)
+}
+
+func (t token) name() string {
+	switch t.typ {
+	case tokError:
+		return "error"
+	case tokEOF:
+		return "EOF"
+	case tokLessThan:
+		return "less than"
+	case tokGreaterThan:
+		return "greater than"
+	case tokLessSlash:
+		return "less slash"
+	case tokSlashGreater:
+		return "slash greater"
+	case tokTagName:
+		return "tag name"
+	case tokAttrKey:
+		return "attr key"
+	case tokEquals:
+		return "equals sign"
+	case tokAttrVal:
+		return "attr value"
+	case tokText:
+		return "text"
+	default:
+		return "UNKNOWN"
+	}
 }
